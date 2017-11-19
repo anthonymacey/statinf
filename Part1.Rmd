@@ -1,0 +1,116 @@
+---
+title: "Statistical Inference Course Project - Part 1"
+author: "Anthony Macey"
+date: "17 November 2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Simulationulation Exercise
+
+In this project you will investigate the exponential distribution in R and compare it with the Central Limit Theorem. The exponential distribution can be simulationulated in R with rexp(n, lambda) where lambda is the rate parameter. The mean of exponential distribution is 1/lambda and the standard deviation is also 1/lambda. Set lambda = 0.2 for all of the simulations. You will investigate the distribution of averages of 40 exponentials. Note that you will need to do a thousand simulations.
+
+Illustrate via simulationulation and associated explanatory text the properties of the distribution of the mean of 40 exponentials. You should
+
+1. Show the sample mean and compare it to the theoretical mean of the distribution.
+2. Show how variable the sample is (via variance) and compare it to the theoretical variance of the distribution.
+3. Show that the distribution is approximately normal.
+
+*In point 3, focus on the difference between the distribution of a large collection of random exponentials and the distribution of a large collection of averages of 40 exponentials.*
+
+```{r echo=TRUE}
+library(ggplot2) 
+
+set.seed(63456)                     #Set Seed to allow reproducibility
+lambda                 <- 0.2       #Set lambda to 0.2
+number.simulations     <- 1000      #Number of simulations
+number.exponentials    <- 40        #Number of Samples
+
+## Creates a 40x1000 matrix of the simulation
+simulation <-
+  replicate(number.simulations, rexp(number.exponentials, lambda))
+```
+
+#Results
+The sample mean is close to that of the theoretical mean and this tends to be the case in samples > 30 as the data tends to become more normal. According to the CLT, the sample mean is approximately normal with mean $\mu$ and standard deviation $\sigma$.  This can be observed in the following plot and tables.
+
+The theoretical standard deviation $\sigma$ of a exponential distribution of rate $\lambda$ is 
+
+$\sigma = \frac{1/\lambda}{\sqrt{n}}$
+
+```{r echo=TRUE}
+theoretical.sd <- (1/lambda)*(1/sqrt(number.exponentials))
+``` 
+
+The theoretical mean $\mu$ of a exponential distribution of rate $\lambda$ is 
+
+$\mu=\frac{1}{\lambda}$ 
+```{r echo=TRUE}
+theoretical.mean <- 1/lambda  
+``` 
+
+The theoretical variance $Var$ of standard deviation $\sigma$ is
+
+```{r echo=TRUE}
+theoretical.var <- theoretical.sd^2
+``` 
+
+*Calculate the actual distributions for the simulation*
+
+```{r echo=TRUE}
+simulation.mean <- apply(simulation,2,mean)
+sample.mean <- mean(simulation.mean) 
+sample.sd <- sd(simulation.mean)
+sample.var <- var(simulation.mean)
+```
+
+Description         | Value
+---------------------|----------------
+Sample Mean  | `r sample.mean`
+Theoretical Mean | `r theoretical.mean`
+Sample Varience | `r sample.var`
+Theoretical Varience | `r theoretical.var`
+Sample SD | `r sample.sd`
+Theoretical SD | `r theoretical.sd`
+
+```{r echo=FALSE}
+df.simulation.mean <- data.frame(simulation.mean)
+
+plot <- ggplot(data = df.simulation.mean, aes(x = simulation.mean))
+plot <- plot +
+  geom_histogram(
+    binwidth = 0.1,
+    fill = "white",
+    color = "black",
+    aes(y = ..density..)
+  ) +
+  labs(title = "Simulation Distribution", x = "Mean", y = "Density") +
+  geom_vline(xintercept = sample.mean,
+             size = 1.0,
+             color = "black") +
+  geom_vline(
+    xintercept = theoretical.mean,
+    size = 1.0,
+    color = "black",
+    linetype = 2
+  ) +
+  stat_function(
+    fun = dnorm,
+    args = list(mean = sample.mean, sample.sd),
+    color = "black",
+    size = 1.0
+  ) +
+  stat_function(
+    fun = dnorm,
+    args = list(mean = theoretical.mean, theoretical.sd),
+    color = "black",
+    size = 1.0,
+    linetype = 2
+  )
+
+print(plot)
+```
+__The theoretical mean and distribution are shown as dotted lines on the plot vs solid lines for the simulation.__

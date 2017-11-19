@@ -1,0 +1,111 @@
+---
+title: "Statistical Inference Course Project - Part 2"
+author: "Anthony Macey"
+date: "18 November 2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# The Effect of Vitamin C on Tooth Growth in Guinea Pigs
+
+Now in the second portion of the project, we're going to analyze the ToothGrowth data in the R datasets package.
+
+1. Load the ToothGrowth data and perform some basic exploratory data analyses
+
+2. Provide a basic summary of the data.
+
+3. Use confidence intervals and/or hypothesis tests to compare tooth growth by supp and dose. (Only use the techniques from class, even if there's other approaches worth considering) 
+
+4. State your conclusions and the assumptions needed for your conclusions.
+
+# Load the data
+```{r echo=FALSE}
+library(ggplot2)
+library(datasets)
+library(gridExtra)
+library(pander)
+
+data(ToothGrowth)
+toothGrowth <- ToothGrowth 
+```
+
+
+# Basic analyis of the data
+```{r echo=FALSE}
+pander(summary(toothGrowth))
+
+toothGrowth$dose <-
+  as.factor(toothGrowth$dose) # Convert dose into a factor
+
+dld <-
+  ggplot(data = toothGrowth, aes(x = dose, y = len, fill = dose)) +
+  geom_boxplot()
+
+dlds <-
+  ggplot(data = toothGrowth, aes(x = dose, y = len, fill = dose)) +
+  geom_boxplot() +
+  theme(legend.position = "none") +
+  facet_grid(. ~ supp)
+
+sls <-
+  ggplot(data = toothGrowth, aes(x = supp, y = len, fill = supp)) +
+  geom_boxplot()
+
+slsd <-
+  ggplot(data = toothGrowth, aes(x = supp, y = len, fill = supp)) +
+  geom_boxplot() +
+  theme(legend.position = "none") +
+  facet_grid(. ~ dose)
+
+grid.arrange(dld, dlds, sls, slsd, ncol = 2, nrow = 2)
+```
+
+#Test 1
+Using `t.test` to check if there is a difference in the performance of the treatments across all doses.
+
+```{r}
+t.test(len ~ supp,
+       data = ToothGrowth,
+       paired = FALSE,
+       var.equal = FALSE)
+```
+
+The p-value is 0.06, and the confidence interval contains zero. This indicates that we can not reject the null hypothesis that the different supplement types have no effect on tooth length.
+
+#Test 2
+Using `t.test` to check if there is a difference in the performance of the treatments in different dose pairs.
+
+```{r}
+t.test(
+  len ~ supp,
+  data = subset (ToothGrowth, dose %in% c(0.5, 1.0)),
+  paired = FALSE,
+  var.equal = FALSE)
+
+t.test(
+  len ~ supp,
+  data = subset (ToothGrowth, dose %in% c(0.5, 2.0)) ,
+  paired = FALSE,
+  var.equal = FALSE)
+
+t.test(
+  len ~ supp,
+  data = subset (ToothGrowth, dose %in% c(1.0, 2.0)),
+  paired = FALSE,
+  var.equal = FALSE)
+```
+
+For all three dose level pairs, the p-value is less than 0.05, and the confidence interval does not contain zero. The mean tooth length increases on raising the dose level and this indicates that we can reject the null hypothesis, and establish that increasing the dose level leads to an increase in tooth length.
+
+#Conclusion
+1. Supplement type has no effect on tooth growth.
+2. Increasing the dosage level leads to increased tooth growth.
+
+#Assumptions
+1. The experiment was done with random assignment of guinea pigs.
+2. The guinea pigs, are representative of the entire population of guinea pigs.
+
+
